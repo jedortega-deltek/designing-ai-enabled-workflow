@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Designing AI Enabled Workflow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --navy-dark:#0A1F5E;
+    --navy:#003478;
+    --blue:#1742F6;
+    --bg:#F3F5F9;
+    --panel:#FFFFFF;
+    --line:#DDE2EC;
+    --ink:#1B2333;
+    --muted:#6B7386;
+    --green:#1E8E5A;
+    --gray:#8A93A6;
+    --danger:#D64545;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Mulish',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+
+  /* ---------- Header ---------- */
+  header.topbar{
+    background:linear-gradient(135deg,var(--navy-dark),var(--navy));
+    color:#fff;
+    padding:14px 24px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-shrink:0;
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand .mark{
+    width:32px;height:32px;border-radius:8px;
+    background:var(--blue);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:14px;color:#fff;
+    flex-shrink:0;
+  }
+  .brand h1{font-size:18px;margin:0;font-weight:800;letter-spacing:.2px;}
+  .brand .sub{font-size:10.5px;color:#BFD0FF;font-weight:600;letter-spacing:.4px;text-transform:uppercase;margin-top:1px;}
+  .topbar .event-tag{
+    margin-left:auto;
+    font-size:12.5px;
+    font-weight:800;
+    letter-spacing:.4px;
+    color:#fff;
+    background:rgba(255,255,255,.14);
+    border:1.5px solid rgba(255,255,255,.35);
+    border-radius:8px;
+    padding:7px 14px;
+    white-space:nowrap;
+  }
+
+  /* ---------- Instructions ---------- */
+  #instructionsPanel{
+    background:#EAF0FF;
+    border-bottom:1px solid var(--line);
+    padding:12px 24px;
+    flex-shrink:0;
+  }
+  #instructionsPanel.collapsed .instructions-body{display:none;}
+  .instructions-head{
+    display:flex;align-items:center;justify-content:space-between;cursor:pointer;
+  }
+  .instructions-head h2{
+    font-size:12.5px;margin:0;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);font-weight:800;
+  }
+  .instructions-head button{
+    background:none;border:none;color:var(--navy);font-size:12px;font-weight:700;cursor:pointer;
+  }
+  .instructions-body{
+    margin-top:10px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+  }
+  .instr-step{
+    background:#fff;border-radius:10px;padding:9px 11px;border:1px solid var(--line);
+  }
+  .instr-step .num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:19px;height:19px;border-radius:50%;
+    background:var(--blue);color:#fff;font-size:11px;font-weight:800;margin-right:6px;
+  }
+  .instr-step strong{font-size:12.5px;color:var(--navy);}
+  .instr-step p{font-size:12px;color:var(--muted);margin:5px 0 0;line-height:1.4;}
+
+  /* ---------- Work bar (deliverable + toolbar), sits directly above canvas ---------- */
+  .workbar{
+    background:#fff;
+    border-bottom:1px solid var(--line);
+    flex-shrink:0;
+  }
+  .deliverable-row{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 24px 4px;
+  }
+  .deliverable-row label{
+    font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);font-weight:800;white-space:nowrap;
+  }
+  .editable-inline{
+    flex:1;
+    max-width:520px;
+    background:#F0F3FF;
+    border:1.5px solid var(--line);
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:14px;
+    font-weight:700;
+    color:var(--navy);
+    outline:none;
+  }
+  .editable-inline:focus{border-color:var(--blue);background:#fff;}
+  .editable-inline:empty:before{content:attr(data-placeholder);color:#9AA6C4;font-weight:600;}
+
+  .toolbar{
+    display:flex;align-items:center;gap:10px;
+    padding:8px 24px 10px;
+    flex-wrap:wrap;
+  }
+  .toolbar button{
+    border:1.5px solid var(--line);
+    background:#fff;
+    color:var(--navy);
+    font-family:'Mulish',sans-serif;
+    font-weight:700;
+    font-size:13px;
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    display:flex;align-items:center;gap:6px;
+    transition:background .15s,border-color .15s;
+  }
+  .toolbar button:hover{background:#F0F3FF;border-color:var(--blue);}
+  .toolbar button.primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .toolbar button.primary:hover{background:var(--navy);}
+  .toolbar button.danger{color:var(--danger);}
+  .toolbar button.danger:hover{background:#FDEAEA;border-color:var(--danger);}
+  .toolbar .spacer{flex:1;}
+  .legend{display:flex;gap:16px;align-items:center;font-size:12.5px;color:var(--muted);font-weight:600;}
+  .legend .swatch{width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;}
+  .swatch.green{background:var(--green);}
+  .swatch.gray{background:var(--gray);}
+  .hint{font-size:12px;color:var(--muted);font-style:italic;}
+
+  /* ---------- Canvas ---------- */
+  #canvasWrapper{
+    flex:1;
+    overflow:auto;
+    position:relative;
+    background:
+      linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px),
+      linear-gradient(rgba(0,0,0,0.035) 1px, transparent 1px);
+    background-size:28px 28px;
+    background-color:#EEF1F6;
+  }
+  #canvas{
+    position:relative;
+    width:2600px;
+    height:1500px;
+  }
+  #arrowLayer{
+    position:absolute;top:0;left:0;
+    width:100%;height:100%;
+    pointer-events:none;
+    z-index:2;
+    overflow:visible;
+  }
+  #arrowLayer line.hit{cursor:pointer;pointer-events:stroke;}
+  #arrowLayer line.hit:hover{stroke:var(--danger);}
+  #arrowLayer line.temp{stroke:var(--blue);stroke-dasharray:5,4;}
+
+  /* ---------- Phase container ---------- */
+  .phase{
+    position:absolute;
+    border:2px dashed #A9B6D6;
+    border-radius:14px;
+    background:rgba(23,66,246,0.04);
+    z-index:1;
+    min-width:260px;
+    min-height:180px;
+  }
+  .phase-header{
+    position:absolute;top:0;left:0;right:0;
+    height:34px;
+    background:rgba(0,52,120,0.9);
+    border-radius:12px 12px 0 0;
+    display:flex;align-items:center;
+    padding:0 8px;
+    gap:6px;
+    cursor:grab;
+    color:#fff;
+  }
+  .phase-header .grip{cursor:grab;opacity:.7;font-size:13px;}
+  .phase-title{
+    flex:1;
+    color:#fff;font-weight:800;font-size:13px;
+    outline:none;padding:2px 4px;border-radius:4px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .phase-title:focus{background:rgba(255,255,255,.15);}
+  .phase-title:empty:before{content:attr(data-placeholder);color:#C9D6F5;}
+  .phase-del{
+    background:none;border:none;color:#ffb4b4;font-size:15px;cursor:pointer;font-weight:800;line-height:1;
+    padding:2px 5px;
+  }
+  .phase-del:hover{color:#fff;background:var(--danger);border-radius:4px;}
+  .phase-resize{
+    position:absolute;right:0;bottom:0;width:16px;height:16px;
+    cursor:nwse-resize;
+    background:linear-gradient(135deg,transparent 50%,#A9B6D6 50%);
+    border-radius:0 0 12px 0;
+  }
+
+  /* ---------- Step box ---------- */
+  .step{
+    position:absolute;
+    width:230px;
+    background:var(--step-fill, #EDEFF3);
+    border-radius:12px;
+    box-shadow:0 2px 6px rgba(20,30,60,.10), 0 0 0 2px var(--step-color, #8A93A6);
+    z-index:3;
+    font-size:12.5px;
+    --step-color:#8A93A6;
+    --step-fill:#EDEFF3;
+    --step-header-fill:#E1E4EB;
+  }
+  .step.selected-src{box-shadow:0 0 0 3px var(--blue);}
+  .step-header{
+    display:flex;align-items:center;gap:6px;
+    padding:7px 8px;
+    border-radius:10px 10px 0 0;
+    background:var(--step-header-fill);
+    cursor:grab;
+  }
+  .step-header .grip{opacity:.55;font-size:12px;cursor:grab;}
+  .color-dot-btn{
+    margin-left:auto;
+    width:18px;height:18px;
+    border-radius:50%;
+    border:2px solid #fff;
+    box-shadow:0 0 0 1px rgba(0,0,0,.15);
+    background:var(--step-color);
+    cursor:pointer;
+    flex-shrink:0;
+    padding:0;
+  }
+  .step-del{
+    background:none;border:none;color:#8890a0;font-size:15px;cursor:pointer;font-weight:800;line-height:1;
+    padding:0 3px;
+  }
+  .step-del:hover{color:#fff;background:var(--danger);border-radius:4px;}
+  .step-body{padding:8px 10px 10px;background:rgba(255,255,255,.55);border-radius:0 0 12px 12px;}
+  .field-label{
+    font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:800;margin-top:7px;
+  }
+  .field-label:first-child{margin-top:0;}
+  .editable{
+    outline:none;
+    border:1px solid transparent;
+    border-radius:6px;
+    padding:3px 5px;
+    margin-top:2px;
+    min-height:16px;
+    line-height:1.35;
+  }
+  .editable:hover{border-color:var(--line);}
+  .editable:focus{border-color:var(--blue);background:#F7F9FF;}
+  .editable:empty:before{content:attr(data-placeholder);color:#AEB4C2;}
+  .activity-field{font-weight:700;font-size:13px;color:var(--ink);}
+  .notes-field{font-style:italic;color:var(--muted);font-size:11.5px;}
+  .ai-list{display:flex;flex-direction:column;gap:2px;}
+  .ai-entry{display:flex;align-items:flex-start;gap:4px;}
+  .ai-entry .ai-field{flex:1;}
+  .ai-entry-del{
+    background:none;border:none;color:#AEB4C2;font-size:14px;font-weight:800;line-height:1.4;
+    cursor:pointer;padding:2px 3px;flex-shrink:0;
+  }
+  .ai-entry-del:hover{color:#fff;background:var(--danger);border-radius:4px;}
+  .add-ai-btn{
+    background:none;border:none;color:var(--blue);font-weight:800;font-size:11px;
+    cursor:pointer;padding:3px 5px;text-align:left;align-self:flex-start;
+  }
+  .add-ai-btn:hover{text-decoration:underline;}
+
+  /* connector handles */
+  .handle{
+    position:absolute;
+    top:50%;
+    width:14px;height:14px;
+    margin-top:-7px;
+    border-radius:50%;
+    background:var(--blue);
+    border:2px solid #fff;
+    box-shadow:0 0 0 1px rgba(0,0,0,.15);
+    cursor:crosshair;
+    z-index:6;
+    opacity:.35;
+    transition:opacity .12s, transform .12s;
+  }
+  .step:hover .handle{opacity:1;}
+  .handle:hover{transform:scale(1.25);opacity:1;}
+  .handle.left{left:-7px;}
+  .handle.right{right:-7px;}
+
+  /* color palette popover */
+  .palette{
+    position:absolute;
+    z-index:20;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:10px;
+    box-shadow:0 6px 18px rgba(20,30,60,.18);
+    padding:8px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:6px;
+  }
+  .palette-swatch{
+    width:24px;height:24px;
+    border-radius:50%;
+    cursor:pointer;
+    border:2px solid #fff;
+    box-shadow:0 0 0 1px rgba(0,0,0,.15);
+  }
+  .palette-swatch:hover{transform:scale(1.12);}
+
+  /* ---------- Print ---------- */
+  @media print{
+    body{overflow:visible;height:auto;}
+    .toolbar{display:none;}
+    #instructionsPanel{display:none !important;}
+    #canvasWrapper{overflow:visible;height:auto;background:none;}
+    #canvas{transform-origin:top left;}
+    .phase-resize,.step-del,.phase-del,.grip,.handle,.color-dot-btn,.add-ai-btn,.ai-entry-del{display:none !important;}
+  }
+  /* Used while rasterizing to PNG so controls don't appear in the exported image */
+  .exporting-image .handle,
+  .exporting-image .step-del,
+  .exporting-image .phase-del,
+  .exporting-image .grip,
+  .exporting-image .phase-resize,
+  .exporting-image .color-dot-btn,
+  .exporting-image .add-ai-btn,
+  .exporting-image .ai-entry-del{
+    visibility:hidden !important;
+  }
+  .print-legend{display:none;gap:20px;padding:8px 24px;font-size:12px;color:var(--muted);font-weight:700;}
+  @media print{ .print-legend{display:flex;} }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="mark">AI</div>
+    <div>
+      <h1>Designing AI Enabled Workflow</h1>
+      <div class="sub">Workflow Mapping Tool</div>
+    </div>
+  </div>
+  <div class="event-tag">Learning Week 2026</div>
+</header>
+
+<div id="instructionsPanel">
+  <div class="instructions-head" id="instructionsToggleHead">
+    <h2>How to use this tool</h2>
+    <button id="toggleInstructionsBtn">Hide instructions ▲</button>
+  </div>
+  <div class="instructions-body">
+    <div class="instr-step">
+      <strong><span class="num">1</span>Name your Deliverable/Responsibility</strong>
+      <p>Enter the deliverable or responsibility area you're mapping below. Pick one — don't try to boil the ocean.</p>
+    </div>
+    <div class="instr-step">
+      <strong><span class="num">2</span>List the Steps</strong>
+      <p>Click "+ Add Step" to add a box for each major step from start to finish. Add phases if it helps organize a longer process.</p>
+    </div>
+    <div class="instr-step">
+      <strong><span class="num">3</span>Tag &amp; Color-Code</strong>
+      <p>Click the color dot on a step to mark it Green if AI/automation already exists there, or Gray if not yet.</p>
+    </div>
+    <div class="instr-step">
+      <strong><span class="num">4</span>Spot AI Opportunities</strong>
+      <p>Revisit every Gray step — could AI support or automate it? Capture ideas in Notes. Drag from a step's side handle to another step to connect them.</p>
+    </div>
+  </div>
+</div>
+
+<div class="workbar">
+  <div class="deliverable-row">
+    <label>Deliverable / Responsibility</label>
+    <div id="deliverableName" class="editable-inline" contenteditable="true" data-placeholder="e.g., Client Onboarding"></div>
+  </div>
+  <div class="toolbar">
+    <button id="addStepBtn" class="primary">+ Add Step</button>
+    <button id="addPhaseBtn">+ Add Phase</button>
+    <span class="hint">Tip: drag the ● on the side of a step to another step to connect them.</span>
+    <span class="spacer"></span>
+    <div class="legend">
+      <span><span class="swatch green"></span>AI already here</span>
+      <span><span class="swatch gray"></span>No AI yet</span>
+    </div>
+    <button id="exportBtn">⬇ Export to PDF</button>
+    <button id="exportImageBtn">🖼 Export as Image</button>
+    <button id="resetBtn" class="danger">Clear All</button>
+  </div>
+</div>
+
+<div class="print-legend">
+  <span>🟩 Green = AI already here</span>
+  <span>⬜ Gray = No AI yet</span>
+</div>
+
+<div id="canvasWrapper">
+  <div id="canvas">
+    <svg id="arrowLayer"><defs>
+      <marker id="arrowHead" markerWidth="14" markerHeight="14" refX="11" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+        <path d="M0,0 L12,6 L0,12 Z" fill="#3A4358"></path>
+      </marker>
+    </defs></svg>
+  </div>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('canvas');
+  const arrowLayer = document.getElementById('arrowLayer');
+  const canvasWrapper = document.getElementById('canvasWrapper');
+
+  let stepCount = 0;
+  let phaseCount = 0;
+  const steps = {};   // id -> {el}
+  const phases = {};  // id -> {el}
+  const arrows = [];  // {id, from, to, lineEl, hitEl}
+  let arrowIdCounter = 0;
+
+  const COLORS = ['#8A93A6','#1E8E5A','#E0A83E','#1742F6','#D64545','#7C5CD6','#0A1F5E','#2AA9C7'];
+
+  let activePalette = null;
+  let connectDrag = null; // {fromId, tempLine}
+
+  // ---------- Helpers ----------
+  function uid(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
+
+  function hexToRgba(hex, alpha){
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  function getCenter(el){
+    return { x: el.offsetLeft + el.offsetWidth/2, y: el.offsetTop + el.offsetHeight/2 };
+  }
+  function getHandlePos(el, side){
+    return { x: el.offsetLeft + (side==='left' ? 0 : el.offsetWidth), y: el.offsetTop + el.offsetHeight/2 };
+  }
+  // Returns the point on el's border, in the direction of (towardX, towardY), so lines end at the side of the box rather than its center.
+  function rectEdgePoint(el, towardX, towardY){
+    const cx = el.offsetLeft + el.offsetWidth/2;
+    const cy = el.offsetTop + el.offsetHeight/2;
+    const hw = el.offsetWidth/2, hh = el.offsetHeight/2;
+    const dx = towardX - cx, dy = towardY - cy;
+    if (dx === 0 && dy === 0) return { x:cx, y:cy };
+    const scaleX = dx !== 0 ? hw/Math.abs(dx) : Infinity;
+    const scaleY = dy !== 0 ? hh/Math.abs(dy) : Infinity;
+    const scale = Math.min(scaleX, scaleY);
+    return { x: cx + dx*scale, y: cy + dy*scale };
+  }
+
+  function bringToFront(el){
+    el.style.zIndex = 7;
+    setTimeout(()=>{ el.style.zIndex = el.classList.contains('step') ? 3 : 1; }, 50);
+  }
+
+  function closeActivePalette(){
+    if (activePalette){ activePalette.remove(); activePalette = null; }
+  }
+  document.addEventListener('pointerdown', (e)=>{
+    if (activePalette && !e.target.closest('.palette') && !e.target.closest('.color-dot-btn')) closeActivePalette();
+  });
+
+  // ---------- Dragging ----------
+  function makeDraggable(el, handle, onMove){
+    let startX, startY, origLeft, origTop, dragging=false;
+    handle.addEventListener('pointerdown', (e)=>{
+      if (e.target.closest('[contenteditable]') && e.target !== handle) return;
+      if (e.target.closest('.color-dot-btn') || e.target.closest('.handle')) return;
+      dragging = true;
+      startX = e.clientX; startY = e.clientY;
+      origLeft = el.offsetLeft; origTop = el.offsetTop;
+      handle.setPointerCapture(e.pointerId);
+      bringToFront(el);
+      e.preventDefault();
+    });
+    handle.addEventListener('pointermove', (e)=>{
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      el.style.left = Math.max(0, origLeft + dx) + 'px';
+      el.style.top = Math.max(0, origTop + dy) + 'px';
+      onMove && onMove();
+    });
+    handle.addEventListener('pointerup', ()=>{ dragging = false; });
+  }
+
+  function makeResizable(el, handle, minW, minH){
+    let startX, startY, origW, origH, resizing=false;
+    handle.addEventListener('pointerdown', (e)=>{
+      resizing = true;
+      startX = e.clientX; startY = e.clientY;
+      origW = el.offsetWidth; origH = el.offsetHeight;
+      handle.setPointerCapture(e.pointerId);
+      e.preventDefault(); e.stopPropagation();
+    });
+    handle.addEventListener('pointermove', (e)=>{
+      if (!resizing) return;
+      const dx = e.clientX - startX, dy = e.clientY - startY;
+      el.style.width = Math.max(minW, origW + dx) + 'px';
+      el.style.height = Math.max(minH, origH + dy) + 'px';
+    });
+    handle.addEventListener('pointerup', ()=>{ resizing = false; });
+  }
+
+  // ---------- Arrows ----------
+  function redrawArrows(){
+    arrows.forEach(a=>{
+      const fromEl = steps[a.from] && steps[a.from].el;
+      const toEl = steps[a.to] && steps[a.to].el;
+      if (!fromEl || !toEl) return;
+      const c1 = getCenter(fromEl);
+      const c2 = getCenter(toEl);
+      const p1 = rectEdgePoint(fromEl, c2.x, c2.y);
+      const p2 = rectEdgePoint(toEl, c1.x, c1.y);
+      [a.lineEl, a.hitEl].forEach(l=>{
+        l.setAttribute('x1', p1.x); l.setAttribute('y1', p1.y);
+        l.setAttribute('x2', p2.x); l.setAttribute('y2', p2.y);
+      });
+    });
+  }
+
+  function addArrow(fromId, toId){
+    if (fromId === toId) return;
+    if (arrows.some(a=>a.from===fromId && a.to===toId)) return;
+    const id = 'arrow_' + (arrowIdCounter++);
+    const hit = document.createElementNS('http://www.w3.org/2000/svg','line');
+    hit.setAttribute('class','hit');
+    hit.setAttribute('stroke','transparent');
+    hit.setAttribute('stroke-width','14');
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('stroke','#3A4358');
+    line.setAttribute('stroke-width','2.5');
+    line.setAttribute('marker-end','url(#arrowHead)');
+    arrowLayer.appendChild(line);
+    arrowLayer.appendChild(hit);
+    const arrowObj = {id, from:fromId, to:toId, lineEl:line, hitEl:hit};
+    arrows.push(arrowObj);
+    hit.addEventListener('click', ()=>{ if (confirm('Remove this connector?')) removeArrow(id); });
+    redrawArrows();
+  }
+
+  function removeArrow(id){
+    const idx = arrows.findIndex(a=>a.id===id);
+    if (idx === -1) return;
+    const a = arrows[idx];
+    a.lineEl.remove(); a.hitEl.remove();
+    arrows.splice(idx,1);
+  }
+
+  function removeArrowsForStep(stepId){
+    arrows.filter(a=>a.from===stepId||a.to===stepId).forEach(a=>removeArrow(a.id));
+  }
+
+  // ---------- Drag-to-connect via side handles ----------
+  function setupHandle(handleEl, stepId){
+    handleEl.addEventListener('pointerdown', (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      const fromEl = steps[stepId].el;
+      const start = getCenter(fromEl);
+      const tempLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+      tempLine.setAttribute('class','temp');
+      tempLine.setAttribute('stroke-width','2.5');
+      tempLine.setAttribute('x1', start.x); tempLine.setAttribute('y1', start.y);
+      tempLine.setAttribute('x2', start.x); tempLine.setAttribute('y2', start.y);
+      arrowLayer.appendChild(tempLine);
+      connectDrag = { fromId: stepId, tempLine };
+      document.body.style.userSelect = 'none';
+    });
+  }
+
+  document.addEventListener('pointermove', (e)=>{
+    if (!connectDrag) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left + canvasWrapper.scrollLeft;
+    const y = e.clientY - rect.top + canvasWrapper.scrollTop;
+    const fromEl = steps[connectDrag.fromId].el;
+    const p1 = rectEdgePoint(fromEl, x, y);
+    connectDrag.tempLine.setAttribute('x1', p1.x);
+    connectDrag.tempLine.setAttribute('y1', p1.y);
+    connectDrag.tempLine.setAttribute('x2', x);
+    connectDrag.tempLine.setAttribute('y2', y);
+    // highlight potential target
+    const targetEl = document.elementFromPoint(e.clientX, e.clientY);
+    const targetStep = targetEl && targetEl.closest('.step');
+    Object.values(steps).forEach(s=>s.el.classList.remove('selected-src'));
+    if (targetStep && targetStep.dataset.id !== connectDrag.fromId){
+      targetStep.classList.add('selected-src');
+    }
+  });
+
+  document.addEventListener('pointerup', (e)=>{
+    if (!connectDrag) return;
+    const targetEl = document.elementFromPoint(e.clientX, e.clientY);
+    const targetStep = targetEl && targetEl.closest('.step');
+    if (targetStep && targetStep.dataset.id !== connectDrag.fromId){
+      addArrow(connectDrag.fromId, targetStep.dataset.id);
+      targetStep.classList.remove('selected-src');
+    }
+    connectDrag.tempLine.remove();
+    connectDrag = null;
+    document.body.style.userSelect = '';
+  });
+
+  // ---------- Color palette ----------
+  function openPalette(anchorBtn, onPick){
+    closeActivePalette();
+    const pal = document.createElement('div');
+    pal.className = 'palette';
+    COLORS.forEach(c=>{
+      const sw = document.createElement('button');
+      sw.className = 'palette-swatch';
+      sw.style.background = c;
+      sw.title = c;
+      sw.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        onPick(c);
+        closeActivePalette();
+      });
+      pal.appendChild(sw);
+    });
+    document.body.appendChild(pal);
+    const rect = anchorBtn.getBoundingClientRect();
+    pal.style.left = (rect.left + window.scrollX) + 'px';
+    pal.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+    activePalette = pal;
+  }
+
+  function applyStepColor(el, hex){
+    el.style.setProperty('--step-color', hex);
+    el.style.setProperty('--step-fill', hexToRgba(hex, .22));
+    el.style.setProperty('--step-header-fill', hexToRgba(hex, .45));
+  }
+
+  function addAiEntry(container, text, focusIt){
+    const row = document.createElement('div');
+    row.className = 'ai-entry';
+    row.innerHTML = `
+      <div class="editable ai-field" contenteditable="true" data-placeholder="Tool or automation name..."></div>
+      <button class="ai-entry-del" title="Remove">×</button>`;
+    const field = row.querySelector('.ai-field');
+    if (text) field.textContent = text;
+    row.querySelector('.ai-entry-del').addEventListener('click', (e)=>{
+      e.stopPropagation();
+      row.remove();
+    });
+    container.appendChild(row);
+    if (focusIt) field.focus();
+    return row;
+  }
+
+  // ---------- Step box ----------
+  function createStep(x, y){
+    stepCount++;
+    const id = uid('step');
+    const el = document.createElement('div');
+    el.className = 'step';
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.dataset.id = id;
+    el.innerHTML = `
+      <div class="handle left" title="Drag to connect"></div>
+      <div class="handle right" title="Drag to connect"></div>
+      <div class="step-header">
+        <span class="grip">⠿</span>
+        <button class="color-dot-btn" title="Set color"></button>
+        <button class="step-del" title="Delete step">×</button>
+      </div>
+      <div class="step-body">
+        <div class="field-label">Activity / Step</div>
+        <div class="editable activity-field" contenteditable="true" data-placeholder="Describe the step..."></div>
+        <div class="field-label">AI / Automation Available</div>
+        <div class="ai-list"></div>
+        <button class="add-ai-btn" type="button">+ Add</button>
+        <div class="field-label">Notes</div>
+        <div class="editable notes-field" contenteditable="true" data-placeholder="Ideas, context, caveats..."></div>
+      </div>`;
+    canvas.appendChild(el);
+    steps[id] = { el };
+    applyStepColor(el, '#8A93A6');
+
+    const header = el.querySelector('.step-header');
+    makeDraggable(el, header, redrawArrows);
+
+    el.querySelectorAll('.handle').forEach(h => setupHandle(h, id));
+
+    const aiList = el.querySelector('.ai-list');
+    el.querySelector('.add-ai-btn').addEventListener('click', (e)=>{
+      e.stopPropagation();
+      addAiEntry(aiList, '', true);
+    });
+
+    el.querySelector('.step-del').addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if (!confirm('Delete this step?')) return;
+      removeArrowsForStep(id);
+      el.remove();
+      delete steps[id];
+    });
+
+    el.querySelector('.color-dot-btn').addEventListener('click', (e)=>{
+      e.stopPropagation();
+      openPalette(e.target, (hex)=>{ applyStepColor(el, hex); });
+    });
+
+    return el;
+  }
+
+  // ---------- Phase container ----------
+  function createPhase(x, y, width, height){
+    phaseCount++;
+    const id = uid('phase');
+    const el = document.createElement('div');
+    el.className = 'phase';
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.style.width = (width || 520) + 'px';
+    el.style.height = (height || 320) + 'px';
+    el.dataset.id = id;
+    el.innerHTML = `
+      <div class="phase-header">
+        <span class="grip">⠿</span>
+        <div class="phase-title" contenteditable="true" data-placeholder="Phase ${phaseCount} name...">Phase ${phaseCount}</div>
+        <button class="phase-del" title="Delete phase">×</button>
+      </div>
+      <div class="phase-resize"></div>`;
+    canvas.insertBefore(el, canvas.firstChild.nextSibling);
+    phases[id] = { el };
+
+    const header = el.querySelector('.phase-header');
+    makeDraggable(el, header, null);
+    makeResizable(el, el.querySelector('.phase-resize'), 260, 180);
+
+    el.querySelector('.phase-del').addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if (!confirm('Delete this phase container? (Steps inside will not be deleted)')) return;
+      el.remove();
+      delete phases[id];
+    });
+
+    return el;
+  }
+
+  // ---------- Toolbar actions ----------
+  document.getElementById('addStepBtn').addEventListener('click', ()=>{
+    const scrollX = canvasWrapper.scrollLeft, scrollY = canvasWrapper.scrollTop;
+    createStep(scrollX + 60 + (stepCount%5)*20, scrollY + 80 + (stepCount%5)*16);
+  });
+
+  document.getElementById('addPhaseBtn').addEventListener('click', ()=>{
+    const scrollX = canvasWrapper.scrollLeft, scrollY = canvasWrapper.scrollTop;
+    createPhase(scrollX + 40, scrollY + 60 + (phaseCount%3)*40);
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', ()=>{
+    if (!confirm('Clear the entire canvas? This cannot be undone.')) return;
+    Object.values(steps).forEach(s=>s.el.remove());
+    Object.values(phases).forEach(p=>p.el.remove());
+    arrows.forEach(a=>{a.lineEl.remove(); a.hitEl.remove();});
+    arrows.length = 0;
+    Object.keys(steps).forEach(k=>delete steps[k]);
+    Object.keys(phases).forEach(k=>delete phases[k]);
+    stepCount = 0; phaseCount = 0;
+  });
+
+  document.getElementById('toggleInstructionsBtn').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const panel = document.getElementById('instructionsPanel');
+    const collapsed = panel.classList.toggle('collapsed');
+    e.target.textContent = collapsed ? 'Show instructions ▼' : 'Hide instructions ▲';
+  });
+
+  // ---------- Export to PDF ----------
+  document.getElementById('exportBtn').addEventListener('click', ()=>{
+    const { maxRight, maxBottom } = getContentBounds();
+    const pageW = 1120, pageH = 760;
+    const scale = Math.min(pageW / maxRight, pageH / maxBottom, 1);
+    canvas.style.transform = `scale(${scale})`;
+    canvas.style.width = maxRight + 'px';
+    canvas.style.height = maxBottom + 'px';
+
+    const cleanup = ()=>{
+      canvas.style.transform = '';
+      canvas.style.width = '2600px';
+      canvas.style.height = '1500px';
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    setTimeout(()=>{ window.print(); }, 50);
+  });
+
+  function getContentBounds(){
+    let maxRight = 400, maxBottom = 300;
+    Object.values(steps).forEach(s=>{
+      maxRight = Math.max(maxRight, s.el.offsetLeft + s.el.offsetWidth + 40);
+      maxBottom = Math.max(maxBottom, s.el.offsetTop + s.el.offsetHeight + 40);
+    });
+    Object.values(phases).forEach(p=>{
+      maxRight = Math.max(maxRight, p.el.offsetLeft + p.el.offsetWidth + 40);
+      maxBottom = Math.max(maxBottom, p.el.offsetTop + p.el.offsetHeight + 40);
+    });
+    return { maxRight, maxBottom };
+  }
+
+  document.getElementById('exportImageBtn').addEventListener('click', ()=>{
+    const { maxRight, maxBottom } = getContentBounds();
+    canvas.classList.add('exporting-image');
+    const btn = document.getElementById('exportImageBtn');
+    const origLabel = btn.textContent;
+    btn.textContent = 'Rendering...';
+    html2canvas(canvas, {
+      backgroundColor:'#EEF1F6',
+      width:maxRight,
+      height:maxBottom,
+      x:0, y:0,
+      scale:2,
+      useCORS:true
+    }).then(renderedCanvas=>{
+      canvas.classList.remove('exporting-image');
+      btn.textContent = origLabel;
+      const link = document.createElement('a');
+      const nameField = document.getElementById('deliverableName').textContent.trim();
+      const fileSafe = (nameField || 'ai-workflow-map').replace(/[^a-z0-9\-_]+/gi,'-').toLowerCase();
+      link.download = fileSafe + '.png';
+      link.href = renderedCanvas.toDataURL('image/png');
+      link.click();
+    }).catch(err=>{
+      canvas.classList.remove('exporting-image');
+      btn.textContent = origLabel;
+      alert('Image export failed: ' + err.message);
+    });
+  });
+
+  // ---------- Seed with a starter template: 2 phases, 4 connected steps ----------
+  function seedTemplate(){
+    createPhase(60, 80, 560, 300);
+    createPhase(680, 80, 560, 300);
+    const s1 = createStep(90, 140);
+    const s2 = createStep(360, 140);
+    const s3 = createStep(710, 140);
+    const s4 = createStep(980, 140);
+    addArrow(s1.dataset.id, s2.dataset.id);
+    addArrow(s2.dataset.id, s3.dataset.id);
+    addArrow(s3.dataset.id, s4.dataset.id);
+  }
+  seedTemplate();
+})();
+</script>
+</body>
+</html>
