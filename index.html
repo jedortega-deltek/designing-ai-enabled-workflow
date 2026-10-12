@@ -67,25 +67,41 @@
     white-space:nowrap;
   }
 
-  /* ---------- Instructions ---------- */
-  #instructionsPanel{
+  /* ---------- Tool Nav (How to Use / Methodology) ---------- */
+  #toolNav{
     background:#EAF0FF;
     border-bottom:1px solid var(--line);
-    padding:12px 24px;
     flex-shrink:0;
   }
-  #instructionsPanel.collapsed .instructions-body{display:none;}
-  .instructions-head{
-    display:flex;align-items:center;justify-content:space-between;cursor:pointer;
+  .nav-tabs{
+    display:flex;align-items:center;gap:8px;
+    padding:10px 24px 0;
   }
-  .instructions-head h2{
-    font-size:12.5px;margin:0;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);font-weight:800;
+  .nav-tab{
+    background:transparent;
+    border:none;
+    border-bottom:3px solid transparent;
+    color:var(--muted);
+    font-family:'Mulish',sans-serif;
+    font-weight:800;
+    font-size:12.5px;
+    letter-spacing:.2px;
+    padding:8px 6px 10px;
+    cursor:pointer;
+    display:flex;align-items:center;gap:6px;
   }
-  .instructions-head button{
+  .nav-tab:hover{color:var(--navy);}
+  .nav-tab.active{color:var(--navy);border-bottom-color:var(--blue);}
+  .nav-collapse-btn{
+    margin-left:auto;
     background:none;border:none;color:var(--navy);font-size:12px;font-weight:700;cursor:pointer;
+    padding:8px 6px;
   }
+  #toolNav.collapsed .nav-panel{display:none;}
+  .nav-panel{padding:14px 24px 16px;}
+
+  /* How to use grid */
   .instructions-body{
-    margin-top:10px;
     display:grid;
     grid-template-columns:repeat(4,1fr);
     gap:12px;
@@ -100,6 +116,48 @@
   }
   .instr-step strong{font-size:12.5px;color:var(--navy);}
   .instr-step p{font-size:12px;color:var(--muted);margin:5px 0 0;line-height:1.4;}
+
+  /* SMART methodology */
+  .smart-intro{font-size:12px;color:var(--muted);margin:0 0 12px;}
+  .smart-intro strong{color:var(--navy);}
+  .smart-row{
+    display:flex;align-items:flex-start;gap:2px;
+  }
+  .smart-stage{
+    flex:1;
+    min-width:0;
+    text-align:center;
+    cursor:pointer;
+    padding:10px 8px;
+    border-radius:14px;
+    transition:background .15s, transform .15s;
+    border:1.5px solid transparent;
+  }
+  .smart-stage:hover{background:#fff;transform:translateY(-2px);box-shadow:0 4px 10px rgba(20,30,60,.08);}
+  .smart-stage.active{background:#fff;border-color:var(--stage-color);box-shadow:0 4px 12px rgba(20,30,60,.12);}
+  .smart-circle{
+    width:52px;height:52px;border-radius:50%;
+    background:var(--stage-color);
+    color:#fff;font-weight:800;font-size:19px;
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 8px;
+    box-shadow:0 4px 10px rgba(0,0,0,.14);
+    transition:transform .15s;
+  }
+  .smart-stage:hover .smart-circle, .smart-stage.active .smart-circle{transform:scale(1.08);}
+  .smart-title{font-weight:800;font-size:12.5px;letter-spacing:.3px;color:var(--ink);}
+  .smart-sub{font-weight:800;font-size:11.5px;color:var(--stage-color);margin-top:3px;}
+  .smart-desc{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.35;}
+  .smart-extra{
+    display:none;
+    font-size:10.5px;color:var(--navy);background:#EAF0FF;border-radius:8px;
+    padding:7px 9px;margin-top:9px;line-height:1.4;text-align:left;
+  }
+  .smart-stage.active .smart-extra{display:block;}
+  .smart-chevron{
+    align-self:center;color:#BEE3F8;font-size:20px;margin-top:18px;flex-shrink:0;
+  }
+  .smart-hint{font-size:11px;color:var(--muted);font-style:italic;margin:12px 0 0;text-align:center;}
 
   /* ---------- Work bar (deliverable + toolbar), sits directly above canvas ---------- */
   .workbar{
@@ -345,7 +403,7 @@
   @media print{
     body{overflow:visible;height:auto;}
     .toolbar{display:none;}
-    #instructionsPanel{display:none !important;}
+    #toolNav{display:none !important;}
     #canvasWrapper{overflow:visible;height:auto;background:none;}
     #canvas{transform-origin:top left;}
     .phase-resize,.step-del,.phase-del,.grip,.handle,.color-dot-btn,.add-ai-btn,.ai-entry-del{display:none !important;}
@@ -378,28 +436,78 @@
   <div class="event-tag">Learning Week 2026</div>
 </header>
 
-<div id="instructionsPanel">
-  <div class="instructions-head" id="instructionsToggleHead">
-    <h2>How to use this tool</h2>
-    <button id="toggleInstructionsBtn">Hide instructions ▲</button>
+<div id="toolNav">
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-tab="how">📘 How to Use This Tool</button>
+    <button class="nav-tab" data-tab="method">🎯 Workflow-First Methodology</button>
+    <button class="nav-collapse-btn" id="navCollapseBtn">Hide ▲</button>
   </div>
-  <div class="instructions-body">
-    <div class="instr-step">
-      <strong><span class="num">1</span>Name your Deliverable/Responsibility</strong>
-      <p>Enter the deliverable or responsibility area you're mapping below. Pick one — don't try to boil the ocean.</p>
+
+  <div class="nav-panel" id="panel-how">
+    <div class="instructions-body">
+      <div class="instr-step">
+        <strong><span class="num">1</span>Name your Deliverable/Responsibility</strong>
+        <p>Enter the deliverable or responsibility area you're mapping below. Pick one — don't try to boil the ocean.</p>
+      </div>
+      <div class="instr-step">
+        <strong><span class="num">2</span>List the Steps</strong>
+        <p>Click "+ Add Step" to add a box for each major step from start to finish. Add phases if it helps organize a longer process.</p>
+      </div>
+      <div class="instr-step">
+        <strong><span class="num">3</span>Tag &amp; Color-Code</strong>
+        <p>Click the color dot on a step to mark it Green if AI/automation already exists there, or Gray if not yet.</p>
+      </div>
+      <div class="instr-step">
+        <strong><span class="num">4</span>Spot AI Opportunities</strong>
+        <p>Revisit every Gray step — could AI support or automate it? Capture ideas in Notes. Drag from a step's side handle to another step to connect them.</p>
+      </div>
     </div>
-    <div class="instr-step">
-      <strong><span class="num">2</span>List the Steps</strong>
-      <p>Click "+ Add Step" to add a box for each major step from start to finish. Add phases if it helps organize a longer process.</p>
+  </div>
+
+  <div class="nav-panel" id="panel-method" style="display:none;">
+    <p class="smart-intro"><strong>SMART:</strong> the repeatable, workflow-first method behind this tool. Click a stage below to see how it maps to the buttons in this app.</p>
+    <div class="smart-row">
+      <div class="smart-stage" data-stage="scope" style="--stage-color:#17A896;">
+        <div class="smart-circle">S</div>
+        <div class="smart-title">SCOPE</div>
+        <div class="smart-sub">Identify your work</div>
+        <div class="smart-desc">Identify the role, responsibility, deliverable, or outcome.</div>
+        <div class="smart-extra">Start by naming your Deliverable / Responsibility in the field below.</div>
+      </div>
+      <div class="smart-chevron">▶</div>
+      <div class="smart-stage" data-stage="map" style="--stage-color:#F2735C;">
+        <div class="smart-circle">M</div>
+        <div class="smart-title">MAP</div>
+        <div class="smart-sub">Make the work visible</div>
+        <div class="smart-desc">List the steps and build the workflow.</div>
+        <div class="smart-extra">Use "+ Add Step" and "+ Add Phase," then drag a step's side handle to another step to connect them in order.</div>
+      </div>
+      <div class="smart-chevron">▶</div>
+      <div class="smart-stage" data-stage="assess" style="--stage-color:#E0A83E;">
+        <div class="smart-circle">A</div>
+        <div class="smart-title">ASSESS</div>
+        <div class="smart-sub">Today</div>
+        <div class="smart-desc">Label reality as it exists right now.</div>
+        <div class="smart-extra">Click each step's color dot — mark it Gray (no AI yet) or Green (AI already here).</div>
+      </div>
+      <div class="smart-chevron">▶</div>
+      <div class="smart-stage" data-stage="reimagine" style="--stage-color:#1E8E5A;">
+        <div class="smart-circle">R</div>
+        <div class="smart-title">REIMAGINE</div>
+        <div class="smart-sub">Tomorrow</div>
+        <div class="smart-desc">Explore new ways AI could improve the process.</div>
+        <div class="smart-extra">Revisit every Gray step. Add ideas under AI/Automation Available or Notes.</div>
+      </div>
+      <div class="smart-chevron">▶</div>
+      <div class="smart-stage" data-stage="transform" style="--stage-color:#1742F6;">
+        <div class="smart-circle">T</div>
+        <div class="smart-title">TRANSFORM</div>
+        <div class="smart-sub">Experiment</div>
+        <div class="smart-desc">Define success, review the output, and improve the workflow.</div>
+        <div class="smart-extra">Export your map to PDF or Image to share it and track progress over time.</div>
+      </div>
     </div>
-    <div class="instr-step">
-      <strong><span class="num">3</span>Tag &amp; Color-Code</strong>
-      <p>Click the color dot on a step to mark it Green if AI/automation already exists there, or Gray if not yet.</p>
-    </div>
-    <div class="instr-step">
-      <strong><span class="num">4</span>Spot AI Opportunities</strong>
-      <p>Revisit every Gray step — could AI support or automate it? Capture ideas in Notes. Drag from a step's side handle to another step to connect them.</p>
-    </div>
+    <p class="smart-hint">Click any stage above to reveal how to apply it in this tool.</p>
   </div>
 </div>
 
@@ -500,7 +608,7 @@
     let startX, startY, origLeft, origTop, dragging=false;
     handle.addEventListener('pointerdown', (e)=>{
       if (e.target.closest('[contenteditable]') && e.target !== handle) return;
-      if (e.target.closest('.color-dot-btn') || e.target.closest('.handle')) return;
+      if (e.target.closest('button') || e.target.closest('.handle')) return;
       dragging = true;
       startX = e.clientX; startY = e.clientY;
       origLeft = el.offsetLeft; origTop = el.offsetTop;
@@ -797,11 +905,33 @@
     stepCount = 0; phaseCount = 0;
   });
 
-  document.getElementById('toggleInstructionsBtn').addEventListener('click', (e)=>{
-    e.stopPropagation();
-    const panel = document.getElementById('instructionsPanel');
-    const collapsed = panel.classList.toggle('collapsed');
-    e.target.textContent = collapsed ? 'Show instructions ▼' : 'Hide instructions ▲';
+  // ---------- Tool Nav: tabs + collapse ----------
+  const toolNav = document.getElementById('toolNav');
+  const panelHow = document.getElementById('panel-how');
+  const panelMethod = document.getElementById('panel-method');
+  document.querySelectorAll('.nav-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      const key = tab.dataset.tab;
+      panelHow.style.display = key === 'how' ? '' : 'none';
+      panelMethod.style.display = key === 'method' ? '' : 'none';
+      if (toolNav.classList.contains('collapsed')){
+        toolNav.classList.remove('collapsed');
+        document.getElementById('navCollapseBtn').textContent = 'Hide ▲';
+      }
+    });
+  });
+  document.getElementById('navCollapseBtn').addEventListener('click', (e)=>{
+    const collapsed = toolNav.classList.toggle('collapsed');
+    e.target.textContent = collapsed ? 'Show ▼' : 'Hide ▲';
+  });
+
+  // ---------- SMART methodology stages: click to reveal how-to-apply guidance ----------
+  document.querySelectorAll('.smart-stage').forEach(stage=>{
+    stage.addEventListener('click', ()=>{
+      stage.classList.toggle('active');
+    });
   });
 
   // ---------- Export to PDF ----------
